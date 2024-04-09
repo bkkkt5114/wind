@@ -1,0 +1,32 @@
+import serial
+import time
+
+# 設定串列埠
+ser = serial.Serial('/dev/ttyACM0', 9600)  # 修改為樹莓派上的串列埠
+
+# 等待串列埠初始化
+time.sleep(2)
+
+# 傳送讀取請求
+ser.write(b'wind_speed_ref_frame')
+
+try:
+    while True:
+        # 讀取串列埠資料
+        buf = ser.read(8)
+        
+        # 解析資料
+        speed_dec_value = buf[4]
+        
+        # 顯示風速
+        print("-----------------------------------------------")
+        print("Wind Speed: {} m/s".format(speed_dec_value / 10))
+        
+        # 顯示緩衝區資料
+        print("Buffer")
+        for i in range(8):
+            print(buf[i], hex(buf[i]))
+        
+        time.sleep(3)  # 等待3秒
+except KeyboardInterrupt:
+    ser.close()  # 關閉串列埠連接
