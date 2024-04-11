@@ -13,9 +13,18 @@ def read_wind_speed(address):
     # 在此實現讀取風速的邏輯
     pass
 
+def read_wind_direction(address):
+    # 在此實現讀取風向的邏輯
+    # 填充你的程式碼來從感測器讀取風向資料
+    pass
+
 if __name__ == "__main__":
     address = 2
     wind_speed = 0
+    wind_directions = ["North", "Northeast by north", "Northeast", "Northeast by east", 
+                       "East", "Southeast by east", "Southeast", "Southeast by south", 
+                       "South", "Southwest by south", "Southwest", "Southwest by west", 
+                       "West", "Northwest by west", "Northwest", "Northwest by north"]
 
     # 初始化串口
     serial_port = serial.Serial('/dev/ttyUSB0', 9600)  # 修改為樹莓派上的串口
@@ -28,6 +37,15 @@ if __name__ == "__main__":
 
     try:
         while True:
+            # 讀取風向
+            wind_direction = read_wind_direction(address)
+
+            if wind_direction >= 0:
+                print("WindDirection:", wind_directions[wind_direction], "\n")
+            else:
+                print("Please check whether the sensor connection is normal\n")
+                break
+            
             # 讀取串口資料
             buf = serial_port.read(8)
 
@@ -35,13 +53,7 @@ if __name__ == "__main__":
             speed_dec_value = buf[4]
 
             # 顯示風速
-            print("-----------------------------------------------")
             print("Wind Speed: {} m/s".format(speed_dec_value / 10))
-
-            # 顯示緩衝區資料
-            print("Buffer")
-            for i in range(8):
-                print(buf[i], hex(buf[i]))
 
             time.sleep(3)  # 等待3秒
 
