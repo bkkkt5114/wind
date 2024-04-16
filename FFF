@@ -1,0 +1,46 @@
+import serial
+import time
+
+def read_wind_speed(serial_port):
+    # 在此實現讀取風速的邏輯
+    # 返回風速值
+    # 如果無法讀取風速，返回 None
+    try:
+        # 傳送讀取請求
+        serial_port.write(b'wind_speed_ref_frame')
+
+        # 讀取串列埠資料
+        buf = serial_port.read(8)
+
+        # 解析資料
+        speed_dec_value = buf[4]
+
+        return speed_dec_value / 10  # 假設風速值在 buf 的第五個位置
+    except Exception as e:
+        print("Error reading wind speed:", e)
+        return None
+
+if __name__ == "__main__":
+    # 初始化串口
+    try:
+        serial_port = serial.Serial('/dev/ttyUSB0', 9600)  # 修改為樹莓派上的串口
+
+        # 等待串口初始化完成
+        time.sleep(2)
+
+        while True:
+            # 讀取風速
+            wind_speed = read_wind_speed(serial_port)
+
+            if wind_speed is not None:
+                print("Wind Speed: {} m/s".format(wind_speed))
+            else:
+                print("Failed to read wind speed. Please check the sensor connection.")
+                break
+
+            time.sleep(3)  # 等待3秒
+    except serial.SerialException as se:
+        print("Serial port error:", se)
+    finally:
+        if serial_port.is_open:
+            serial_port.close()  # 關閉串口連接
