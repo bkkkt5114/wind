@@ -1,0 +1,26 @@
+import time
+import minimalmodbus
+
+# 設置串口
+instrument = minimalmodbus.Instrument('/dev/ttyUSB0', 1)  # 這裡的'/dev/ttyUSB0'是串口名稱，1是Modbus地址
+instrument.serial.baudrate = 9600  # 設置波特率
+instrument.serial.timeout = 0.5  # 設置超時時間
+
+# 主要感測程式
+def read_wind_speed():
+    try:
+        wind_speed = instrument.read_register(0, 1, functioncode=4)  # 讀取風速數據，這裡的0是Modbus地址，1是數據位數
+        return wind_speed
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+# 主程式
+if __name__ == "__main__":
+    while True:
+        wind_speed = read_wind_speed()
+        if wind_speed is not None:
+            print("風速:", wind_speed)
+        else:
+            print("無法讀取風速數據")
+        time.sleep(30)  # 每30秒感測一次風速
