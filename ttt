@@ -1,0 +1,38 @@
+import serial
+import time
+
+def init(serial_port):
+    # 在此實現串口初始化的邏輯
+    pass
+
+def modify_address(address):
+    # 在此實現修改地址的邏輯
+    pass
+
+def read_wind_speed(address):
+    # 在此實現讀取風速的邏輯
+    pass
+
+if __name__ == "__main__":
+    address = 2
+    wind_speed = 0
+
+    # 初始化串口
+    serial_port = serial.Serial('/dev/ttyUSB0', 9600)  # 修改為樹莓派上的串口
+
+    # 等待串口初始化完成
+    time.sleep(2)
+
+    while True:
+        # 讀取風速
+        wind_speed = read_wind_speed(address)
+
+        if wind_speed >= 0:
+            print("WindSpeed: {} m/s\n".format(wind_speed))
+        else:
+            print("Please check whether the sensor connection is normal\n")
+            break
+
+        time.sleep(0.05)  # 等待50毫秒
+
+    serial_port.close()  # 關閉串口連接
