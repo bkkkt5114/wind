@@ -1,0 +1,39 @@
+import serial
+import time
+
+def init(port):
+    try:
+        ser = serial.Serial(port, 9600, timeout=1)
+        return ser
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+def read_wind_speed(ser, address):
+    try:
+        command = bytes([address])
+        ser.write(command)
+        time.sleep(0.1)  # 延迟确保数据传输完整
+        response = ser.read(4)
+        if len(response) == 4:
+            wind_speed = float.from_bytes(response, byteorder='big') / 1000  # 假设返回的是带小数点的速度，单位为 m/s
+            return wind_speed
+        else:
+            return None
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+if __name__ == "__main__":
+    ser = init("/dev/ttyUSB0")
+    if ser is None:
+        print("Failed to initialize serial port")
+    else:
+        address = 2
+        while True:
+            wind_speed = read_wind_speed(ser, address)
+            if wind_speed is not None:
+                print("Wind Speed:", wind_speed, "m/s")
+            else:
+                print("Failed to read wind speed data")
+            time.sleep(30)  # 每30秒读取一次风速
