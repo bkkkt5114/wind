@@ -1,0 +1,5 @@
+serial_port = serial.Serial('/dev/ttyUSB0', 9600)
+if serial_port.is_open:
+    print("Serial port is open.")
+else:
+    print("Failed to open serial port.")
