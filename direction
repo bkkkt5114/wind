@@ -31,3 +31,56 @@ while True:
         print("No response from sensor")
 
     time.sleep(1)  # 等待一秒
+
+
+
+
+
+
+
+
+import serial
+import time
+
+# 定义串口设备路径和波特率
+serial_port = '/dev/ttyUSB0'
+baud_rate = 9600
+
+# 初始化串口连接
+ser = serial.Serial(serial_port, baud_rate, timeout=1)
+
+# 定义风向参考帧（根据实际情况填写）
+wind_direction_ref_frame = b'\x01\x02\x03\x04\x05\x06\x07\x08'
+
+# 定义风向值与方向的对应关系列表（根据实际情况填写）
+direction_list = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest']
+
+try:
+    while True:
+        print("-----------------------------------------------")
+        print("Sending read request")
+
+        # 等待一段时间以确保串口数据清空
+        time.sleep(1)
+
+        # 发送风向参考帧
+        ser.write(wind_direction_ref_frame)
+        ser.flush()
+
+        # 读取从机应答帧
+        response_frame = ser.read(8)
+
+        # 检查从机应答帧长度是否符合预期
+        if len(response_frame) == 8:
+            # 解析从机应答帧中的风向值
+            wind_direction = response_frame[3]
+            # 输出风向
+            print("Wind Direction:", direction_list[wind_direction])
+        else:
+            print("Error: Invalid response frame")
+
+        # 延迟一段时间再继续执行
+        time.sleep(3)
+except KeyboardInterrupt:
+    ser.close()
+
