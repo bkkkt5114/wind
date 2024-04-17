@@ -1,2 +1,46 @@
-dmesg | grep ch340
-https://www.wch.cn/download/CH341SER_LINUX_ZIP.html
+import serial
+import time
+
+# 定义串口设备路径和波特率
+serial_port = '/dev/ttyUSB0'
+baud_rate = 9600
+
+# 初始化串口连接
+ser = serial.Serial(serial_port, baud_rate, timeout=1)
+
+# 定义主机询问帧
+query_frame = b'\x02\x03\x00\x00\x00\x01\x84\x39'
+
+try:
+    while True:
+        print("-----------------------------------------------")
+        print("Sending query frame")
+        
+        # 等待一段时间以确保串口数据清空
+        time.sleep(1)
+        
+        # 发送主机询问帧
+        ser.write(query_frame)
+        ser.flush()
+        
+        # 读取从机应答帧
+        response_frame = ser.read(8)
+        
+        # 检查从机应答帧长度是否符合预期
+        if len(response_frame) == 8:
+            # 从从机应答帧中提取风速值（假设风速值占据了第五和第六个字节）
+            wind_speed_bytes = response_frame[4:6]
+            # 将两个字节的风速值解析为整数
+            wind_speed_int = int.from_bytes(wind_speed_bytes, byteorder='big')
+            # 将风速值除以10以获得实际的风速值
+            wind_speed = wind_speed_int / 10.0
+            
+            # 打印风速值
+            print("Wind Speed:", wind_speed, "m/s")
+        else:
+            print("Error: Invalid response frame")
+        
+        # 延迟一段时间再继续执行
+        time.sleep(3)
+except KeyboardInterrupt:
+    ser.close()
