@@ -1,0 +1,101 @@
+import serial
+import time
+
+def added_crc(buf, length):
+    crc = 0xFFFF
+    for pos in range(length):
+        crc ^= buf[pos]
+        for i in range(8):
+            if crc & 0x0001:
+                crc >>= 1
+                crc ^= 0xA001
+            else:
+                crc >>= 1
+    buf[length] = crc % 0x100
+    buf[length + 1] = crc / 0x100
+
+def modify_address(address1, address2):
+    modify_address_com = [0x00, 0x10, 0x10, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00]
+    ret = 0
+    curr = time.time()
+    curr1 = curr
+    ch = 0
+    modify_address_com[0] = address1
+    modify_address_com[8] = address2
+    added_crc(modify_address_com, 9)
+    ser.write(modify_address_com)
+    while not ret:
+        if time.time() - curr > 1:
+            break
+        if time.time() - curr1 > 0.1:
+            ser.write(modify_address_com)
+            curr1 = time.time()
+        if ser.in_waiting > 0:
+            time.sleep(0.007)
+            if ser.read(1) == bytes([address1]):
+                if ser.read(1) == b'\x10':
+                    if ser.read(1) == b'\x10':
+                        if ser.read(1) == b'\x00':
+                            if ser.read(1) == b'\x00':
+                                if ser.read(1) == b'\x01':
+                                    print("Please re-power the sensor and enter: Y.")
+                                    ch = input()
+                                    ret = 1
+    return ret
+
+def init(device):
+    global ser
+    ser = serial.Serial(device, 9600)
+    return ser
+
+def read_wind_speed(address):
+    data = bytearray(7)
+    com = bytearray([0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00])
+    ret = 0
+    wind_speed = 0
+    curr = time.time()
+    curr1 = curr
+    ch = 0
+    com[0] = address
+    added_crc(com, 6)
+    ser.write(com)
+    while not ret:
+        if time.time() - curr > 1:
+            wind_speed = -1
+            break
+        if time.time() - curr1 > 0.1:
+            ser.write(com)
+            curr1 = time.time()
+        if ser.in_waiting > 0:
+            time.sleep(0.01)
+            if ser.read(1) == bytes([address]):
+                data[0] = ser.read(1)
+                if data[0] == 0x03:
+                    data[1] = ser.read(1)
+                    if data[1] == 0x02:
+                        data[2] = ser.read(1)
+                        data[3:] = ser.read(4)
+                        if CRC16_2(data, 5) == (data[5] * 256 + data[6]):
+                            ret = 1
+                            wind_speed = (data[3] * 256 + data[4]) / 10.0
+    return wind_speed
+
+def crc16_2(buf, length):
+    crc = 0xFFFF
+    for pos in range(length):
+        crc ^= buf[pos]
+        for i in range(8):
+            if crc & 0x0001:
+                crc >>= 1
+                crc ^= 0xA001
+            else:
+                crc >>= 1
+    crc = ((crc & 0x00ff) << 8) | ((crc & 0xff00) >> 8)
+    return crc
+
+if __name__ == "__main__":
+    ser = init("/dev/ttyUSB0")
+    while True:
+        wind_speed = read_wind_speed(2)
+        print("Wind Speed:", wind_speed, "m/s")
+        time.sleep(0.1)
