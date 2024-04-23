@@ -12,9 +12,9 @@ def added_crc(buf, length):
             else:
                 crc >>= 1
     buf[length] = crc % 0x100
-    buf[length + 1] = crc / 0x100
+    buf[length + 1] = crc // 0x100
 
-def modify_address(address1, address2):
+def modify_address(address1, address2, ser):
     modify_address_com = [0x00, 0x10, 0x10, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00]
     ret = 0
     curr = time.time()
@@ -44,11 +44,10 @@ def modify_address(address1, address2):
     return ret
 
 def init(device):
-    global ser
     ser = serial.Serial(device, 9600)
     return ser
 
-def read_wind_speed(address):
+def read_wind_speed(address, ser):
     data = bytearray(7)
     com = bytearray([0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00])
     ret = 0
@@ -75,7 +74,7 @@ def read_wind_speed(address):
                     if data[1] == 0x02:
                         data[2] = ser.read(1)
                         data[3:] = ser.read(4)
-                        if CRC16_2(data, 5) == (data[5] * 256 + data[6]):
+                        if crc16_2(data, 5) == (data[5] * 256 + data[6]):
                             ret = 1
                             wind_speed = (data[3] * 256 + data[4]) / 10.0
     return wind_speed
@@ -96,6 +95,6 @@ def crc16_2(buf, length):
 if __name__ == "__main__":
     ser = init("/dev/ttyUSB0")
     while True:
-        wind_speed = read_wind_speed(2)
+        wind_speed = read_wind_speed(2, ser)
         print("Wind Speed:", wind_speed, "m/s")
-        time.sleep(0.1)
+        time.sleep(3)
